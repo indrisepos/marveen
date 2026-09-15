@@ -90,9 +90,28 @@ Lépések:
 
 **Ha kihagytad a skill akciót, pedig A/B/C valamelyike IGEN volt:** kötelezően hagyj nyomot `hot` tier memóriában, hogy később lássuk miért. Ne csendben hagyd ki.
 
-**A bejegyzés kulcsa a LELET, nem a kör.** Előbb keress meglévő `skip-skill:` sort UGYANARRA a leletre:
-- ha van: azt **frissítsd** (számláló + utolsó dátum), NE írj újat;
-- csak akkor írj új sort, ha ez a lelet még egyáltalán nem szerepel.
+**A bejegyzés kulcsa a LELET, nem a kör.** Kötött formátum, hogy a keresés szó szerint találjon:
+
+```
+skip-skill: [<lelet-kulcs>] <ok> (látva: <N>x, utoljára: <ÉÉÉÉ-HH-NN>)
+```
+
+A `<lelet-kulcs>` a lelet rövid, stabil azonosítója: annak a skillnek, feladatnak vagy csatornának a neve,
+amire a kihagyott akció vonatkozott (pl. `[telegram-csatorna]`, `[scheduler-lost-verdict]`). Kisbetű,
+kötőjeles, és ugyanarra a leletre minden körben UGYANAZ -- az `<ok>` szövege változhat, a kulcs nem.
+
+Előbb keress meglévő sort a kulcsra. A kulcs szögletes zárójele miatt ne full-text keresést (`q=`) használj,
+hanem listázd a saját hot memóriádat, és a `skip-skill: [<lelet-kulcs>]` előtagra szűrj:
+
+```bash
+curl -s "http://localhost:3420/api/memories?agent=SAJAT_NEVED&tier=hot&limit=200" \
+  -H "Authorization: Bearer $(cat {{INSTALL_DIR}}/store/.dashboard-token)"
+```
+
+- ha van ilyen sor: azt **frissítsd** `PATCH /api/memories/<id>` hívással (`content`: növelt számláló + mai dátum), NE írj újat;
+- ha nincs, de van régi, kulcs nélküli `skip-skill:` sor, ami tartalmilag ugyanarról a leletről szól: azt írd át
+  az új formátumra (ugyanígy PATCH), a többi ugyanilyen régi sort pedig töröld (`DELETE /api/memories/<id>`);
+- csak akkor írj új sort (POST), ha ez a lelet még egyáltalán nem szerepel.
 
 Egy nyitott lelet egy sor marad, akárhány kör látja. (Mérve 2026-09-13: a kulcs a kör volt, nem a lelet, így minden kör újra beírta ugyanazt -- 35 skip-skill sor, a hot memória 64%-a, egyetlen zárt csatornára.)
 
